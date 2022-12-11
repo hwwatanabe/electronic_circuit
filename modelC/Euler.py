@@ -32,6 +32,8 @@ ts = [0]
 itots = [0]
 i1s = [0]
 i2s = [0]
+i3s = [0]
+i4s = [0]
 q1s = [0]
 
 while True:
@@ -72,12 +74,16 @@ while True:
 
     i1 = (q1 - q1_prev)/dt
     i2 = (q2 - q2_prev)/dt
+    i3 = (q3 - q3_prev)/dt
+    i4 = (q4 - q4_prev)/dt
     itot = i1 + i2
 
     ts.append(t)
     itots.append(itot)
     i1s.append(i1)
     i2s.append(i2)
+    i3s.append(i3)
+    i4s.append(i4)
     q1s.append(q1)
     print(t, q1, q2, q3, q4, itot, i1, i2)
 
@@ -86,6 +92,8 @@ ts = np.array(ts)
 plt.plot(ts, itots, "--", label="itot")
 plt.plot(ts, i1s, "--", label="i1")
 plt.plot(ts, i2s, "--", label="i2")
+plt.plot(ts, i3s, "--", label="i3")
+plt.plot(ts, i4s, "--", label="i4")
 plt.plot(ts ,V(ts))
 #plt.plot(ts, q1s)
 plt.legend()
