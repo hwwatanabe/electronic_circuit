@@ -1,0 +1,74 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+class Boxel:
+    magic = 10000
+
+    def __init__(self, ix, iy, dx, dy, dz):
+        self.ix = 0 
+        self.iy = 0 
+
+        self.dx = dx 
+        self.dy = dy 
+        self.dz = dz 
+
+        self.left = 0
+        self.right = 0
+        self.up = 0
+        self.down = 0
+
+        self.V = 0
+        self.Ix = 0
+        self.Iy = 0
+
+        return 0
+
+
+    def set_k(self, k):
+        self.k = k
+        self.R = 1/self.k/self.dx 
+
+        return 0
+
+    @staticmethod
+    def make_idx(ix, iy):
+        idx = ix*magic + iy
+
+        return idx 
+
+    @staticmethod
+    def decode_idx(idx):
+        iy = idx % magic
+        ix = int((idx - iy)/magic)
+
+        return [ix, iy]
+
+
+
+class Model:
+
+    def __init__(self, nx, ny):
+        self.nx = nx
+        self.ny = ny
+
+        return 0
+
+    def read_boxels(self, boxels):
+        self.boxels = boxels
+
+        return 0
+
+
+    def get_incidence_matrix(self):
+
+        mat = np.zeros((nx, ny))
+        for bx in boxels:
+            pass
+
+    def display_model(self):
+        pass
+
+
+
+if __name__ == "__main__":
+    main()
