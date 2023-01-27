@@ -20,6 +20,7 @@ class Boxel:
 
 
     def __init__(self, ix, iy):
+        cls = type(self)
 
         self.ix  = ix 
         self.iy  = iy 
@@ -34,39 +35,31 @@ class Boxel:
         self.Ix = 0
         self.Iy = 0
 
-        Boxel.nboxel += 1
+        cls.nboxel += 1
 
 
     def set_idxs(self):
+        cls = type(self)
 
         ix = self.ix
         iy = self.iy
-        nx = Boxel.nx
-        ny = Boxel.ny
+        nx = cls.nx
+        ny = cls.ny
 
-        self.idx   = Boxel.make_idx(ix, iy)
+        self.idx   = cls.make_idx(ix, iy)
 
-        self.right = Boxel.make_idx( (ix+1)%nx, iy)
-        self.left  = Boxel.make_idx( (ix-1)%nx, iy)
+        self.right = cls.make_idx( (ix+1)%nx, iy)
+        self.left  = cls.make_idx( (ix-1)%nx, iy)
 
         if iy + 1 < ny:
-            self.up    = Boxel.make_idx( ix, iy+1)
+            self.up    = cls.make_idx( ix, iy+1)
         else:
             self.up    = -1
 
         if iy - 1 > 0:
-            self.down  = Boxel.make_idx( ix, iy-1)
+            self.down  = cls.make_idx( ix, iy-1)
         else:
             self.down  = -1
-
-        return 0
-
-
-    def set_k(self, k):
-        self.k = k
-        self.R = 1/self.k/Boxel.dz  ## <- if dx == dy
-
-        return 0
 
 
     @classmethod
@@ -76,18 +69,24 @@ class Boxel:
             bx.set_k(k)
             print(bx.R)
 
-        return 0
 
-    @staticmethod
-    def make_idx(ix, iy):
-        idx = ix + iy*Boxel.nx
+    def set_k(self, k):
+        cls = type(self)
+        self.k = k
+        self.R = 1/self.k/cls.dz  ## <- if dx == dy
+
+
+    @classmethod
+    def make_idx(cls, ix, iy):
+
+        idx = ix + iy*cls.nx
 
         return idx 
 
-    @staticmethod
-    def decode_idx(idx):
-        ix = idx % Boxel.nx
-        iy = int((idx - ix)/Boxel.nx)
+    @classmethod
+    def decode_idx(cls, idx):
+        ix = idx % cls.nx
+        iy = int((idx - ix)/cls.nx)
 
         return [ix, iy]
 
@@ -106,8 +105,6 @@ class Boxel:
 
         cls.generate_boxels()
 
-        return 0
-
 
     @classmethod
     def generate_boxels(cls):
@@ -115,7 +112,7 @@ class Boxel:
         k = 1
         for iy in range(cls.ny):
             for ix in range(cls.nx):
-                bx = Boxel(ix, iy)
+                bx = cls(ix, iy)
                 bx.set_idxs()
 #                bx.set_k(k)
     
@@ -128,9 +125,7 @@ class Boxel:
         mat = np.zeros((cls.nnode, cls.nelement))
         Rs  = []
         ielement = 0
-#        print("bx.idx, bx.ix, bx.iy")
         for bx in cls.boxels:
-#            print(bx.idx, bx.ix, bx.iy, ielement)
 
             if bx.iy == 0: # bottom, only up
                 mat[bx.idx, ielement] =  1
@@ -270,7 +265,7 @@ class Boxel:
         xs = []
         ys = []
         Is = np.zeros((cls.ny, cls.nx))
-        cnt = 0
+        cnt = cls.nboxel - 2*cls.nx 
         for bx in cls.boxels:
             if bx.iy == 0:
                 Is[bx.iy, bx.ix] = cls.result[cnt] 
@@ -291,6 +286,9 @@ class Boxel:
         fig.colorbar(im, ax=ax1)
         plt.show()
         print(len(cls.result))
+        print(cls.nx*cls.ny)
+        print(cnt)
+
 
     @classmethod
     def run(cls):
@@ -301,6 +299,7 @@ class Boxel:
         cls.display_k()
         cls.display_V()
         cls.display_I()
+
 
 if __name__ == "__main__":
     main()
