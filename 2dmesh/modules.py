@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import inv
-# use plotly
+#import plotly.graph_objects as go
 
 
 class Boxel:
@@ -68,6 +68,16 @@ class Boxel:
 
         return 0
 
+
+    @classmethod
+    def set_ks(cls, ks):
+
+        for bx, k in zip(cls.boxels, ks):
+            bx.set_k(k)
+            print(bx.R)
+
+        return 0
+
     @staticmethod
     def make_idx(ix, iy):
         idx = ix + iy*Boxel.nx
@@ -94,6 +104,8 @@ class Boxel:
         cls.nKCL     = cls.nnode - 1
         cls.nKVL     = cls.nelement - cls.nnode + 1
 
+        cls.generate_boxels()
+
         return 0
 
 
@@ -105,7 +117,7 @@ class Boxel:
             for ix in range(cls.nx):
                 bx = Boxel(ix, iy)
                 bx.set_idxs()
-                bx.set_k(k)
+#                bx.set_k(k)
     
                 cls.boxels.append(bx)
 
@@ -191,15 +203,104 @@ class Boxel:
 
     @classmethod
     def display_model(cls):
-        # plotly
-        pass
+        xs = []
+        ys = []
+        for bx in cls.boxels:
+            xs.append(bx.ix)
+            ys.append(bx.iy)
+            
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.set_aspect("equal")
+        ax1.scatter(xs, ys, color="black", s=3)
+
+        for i in range(cls.nx):
+            ax1.plot([i,i], [0,cls.ny-1], color="black")
+
+        for i in range(1,cls.ny-1):
+            ax1.plot([0, cls.nx], [i,i], color="black")
+        plt.show()
+
+
+    @classmethod
+    def display_k(cls):
+        xs = []
+        ys = []
+        ks = []
+        ks = np.zeros((cls.ny, cls.nx))
+        for bx in cls.boxels:
+            ks[bx.iy, bx.ix] = bx.k
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.set_aspect("equal")
+        im = ax1.imshow(ks, "jet")
+        ax1.invert_yaxis()
+        fig.colorbar(im, ax=ax1)
+        plt.show()
+
+
+    @classmethod
+    def display_V(cls):
+        xs = []
+        ys = []
+        Vs = []
+        Vs = np.zeros((cls.ny, cls.nx))
+        cnt = 0
+        for bx in cls.boxels:
+            if bx.iy == 0:
+                Vs[bx.iy, bx.ix] = cls.V_bottom 
+            elif bx.iy == cls.ny - 1:
+                Vs[bx.iy, bx.ix] = cls.V_top 
+            else:
+                Vs[bx.iy, bx.ix] = cls.result[cnt]
+                cnt += 1
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.set_aspect("equal")
+        im = ax1.imshow(Vs, "jet")
+        ax1.invert_yaxis()
+        fig.colorbar(im, ax=ax1)
+        plt.show()
+
+
+    @classmethod
+    def display_I(cls):
+        xs = []
+        ys = []
+        Is = np.zeros((cls.ny, cls.nx))
+        cnt = 0
+        for bx in cls.boxels:
+            if bx.iy == 0:
+                Is[bx.iy, bx.ix] = cls.result[cnt] 
+                cnt += 1
+            elif bx.iy == cls.ny - 1:
+                Is[bx.iy, bx.ix] = cls.result[cnt]
+                cnt += 1 
+            else:
+                Is[bx.iy, bx.ix] = cls.result[cnt]
+#                Is[bx.iy, bx.ix] += cls.result[cnt+1]
+                cnt += 1 
+
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        ax1.set_aspect("equal")
+        im = ax1.imshow(Is, "jet")
+        ax1.invert_yaxis()
+        fig.colorbar(im, ax=ax1)
+        plt.show()
+        print(len(cls.result))
 
     @classmethod
     def run(cls):
-        cls.generate_boxels()
         cls.set_incidence_matrix()
         cls.set_eq()
         cls.solve()
+        cls.display_model()
+        cls.display_k()
+        cls.display_V()
+        cls.display_I()
 
 if __name__ == "__main__":
     main()
