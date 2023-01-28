@@ -3,6 +3,8 @@ import numpy as np
 from scipy.linalg import inv
 #import plotly.graph_objects as go
 
+# todo, display V I k in one window
+
 
 class Boxel:
 
@@ -12,14 +14,16 @@ class Boxel:
     boxels         = []
     incidence_mat  = []
     R_mat          = []
-    V_top          = 1 
-    V_bottom       = 0 
+    V_top          = 10
+    V_bottom       = 4 
     left_mat       = []
     right_vec      = []
     result         = []
     elements       = []
     V_vec          = []
     I_vec          = []
+    Lx             = 0
+    Ly             = 0
 
 
     def __init__(self, ix, iy):
@@ -70,13 +74,33 @@ class Boxel:
 
         for bx, k in zip(cls.boxels, ks):
             bx.set_k(k)
-            print(bx.R)
+#            print(bx.R)
+
+    @classmethod
+    def set_ks_circle(cls, center, radius, k):
+
+        idx0 = cls.make_idx(center[0], center[1])
+        for bx in cls.boxels:
+            posx0 = cls.dx/2 + cls.boxels[idx0].ix*cls.dx
+            posy0 = cls.dy/2 + cls.boxels[idx0].iy*cls.dy
+            posx = cls.dx/2 + bx.ix*cls.dx
+            posy = cls.dy/2 + bx.iy*cls.dy
+            deltax = posx - (posx0 + cls.Lx*round((posx-posx0)/cls.Lx))
+            deltay = posy - posy0
+            d2 = deltax**2 + deltay**2
+
+            if d2 < radius**2:
+                bx.set_k(k)
 
 
     def set_k(self, k):
         cls = type(self)
         self.k = k
-        self.R = 1/self.k/cls.dz  ## <- if dx == dy
+
+        if self.k != 0:
+            self.R = 1/self.k/cls.dz  ## <- if dx == dy
+        else:
+            self.R = float("inf")
 
 
     @classmethod
@@ -106,6 +130,9 @@ class Boxel:
         cls.nKCL     = cls.nnode - 1
         cls.nKVL     = cls.nelement - cls.nnode + 1
 
+        cls.Lx      = cls.dx*cls.nx
+        cls.Ly      = cls.dy*cls.ny
+
         cls.generate_boxels()
 
 
@@ -117,7 +144,6 @@ class Boxel:
             for ix in range(cls.nx):
                 bx = cls(ix, iy)
                 bx.set_idxs()
-#                bx.set_k(k)
     
                 cls.boxels.append(bx)
 
@@ -180,10 +206,9 @@ class Boxel:
         cls.incidence_mat = mat
         cls.R_mat         = np.diag(Rs)
 
-        print("-> element")
-        print("Y point")
-        print(mat)
-        print(cls.R_mat)
+#        print("-> element")
+#        print("Y point")
+#        print(mat)
 #        print(np.linalg.matrix_rank(mat))
 
 
@@ -193,13 +218,9 @@ class Boxel:
         mat0 = cls.incidence_mat[:cls.nx                 ,:].copy()
         mat1 = cls.incidence_mat[cls.nx:cls.nnode-cls.nx:,:].copy()
         mat2 = cls.incidence_mat[cls.nnode-cls.nx:       ,:].copy()
-
-        temp1 = np.vstack((cls.R_mat, mat1))
-
         zero_mat = np.zeros((mat1.shape[0], mat1.shape[0]))
-        temp2    = np.vstack((mat1.T, zero_mat))
 
-        cls.left_mat = np.hstack((temp2, temp1))
+        cls.left_mat = np.block([[mat1.T, cls.R_mat], [zero_mat, mat1]])
 
         temp1 = -1 * mat0.T @ np.ones(cls.nx)*cls.V_bottom
         temp2 = -1 * mat2.T @ np.ones(cls.nx)*cls.V_top
@@ -214,9 +235,9 @@ class Boxel:
         cls.result = inv(cls.left_mat) @ cls.right_vec
         cls.V_vec  = cls.result[:cls.nboxel-2*cls.nx]
         cls.I_vec  = cls.result[cls.nboxel-2*cls.nx:]
-        print(cls.result)
-        print(cls.V_vec)
-        print(cls.I_vec)
+#        print(cls.result)
+#        print(cls.V_vec)
+#        print(cls.I_vec)
 
 
     @classmethod
@@ -262,7 +283,6 @@ class Boxel:
     def display_V(cls):
         xs = []
         ys = []
-        Vs = []
         Vs = np.zeros((cls.ny, cls.nx))
         cnt = 0
         for bx in cls.boxels:
@@ -289,7 +309,6 @@ class Boxel:
     @classmethod
     def display_I(cls):
 
-        ### todo: if iy ==0 or iy == cls.ny-1 -> not 0.5*
         for e in cls.elements:
             if e.direction == "x":
                 cls.boxels[e.forward].Ix += cls.I_vec[e.idx]/2
