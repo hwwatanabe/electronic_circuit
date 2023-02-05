@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import inv
+#import dask.array as da
 #import plotly.graph_objects as go
 
 # todo, display V I k in one window
@@ -8,22 +9,47 @@ from scipy.linalg import inv
 
 class Boxel:
 
-    nboxel         = 0
-    nx, ny         = 0, 0
-    dx, dy, dz     = 0, 0, 0
-    boxels         = []
-    incidence_mat  = []
-    R_mat          = []
-    V_top          = 10
-    V_bottom       = 4 
-    left_mat       = []
-    right_vec      = []
-    result         = []
-    elements       = []
-    V_vec          = []
-    I_vec          = []
-    Lx             = 0
-    Ly             = 0
+#    nboxel         = 0
+#    nx, ny         = 0, 0
+#    dx, dy, dz     = 0, 0, 0
+#    boxels         = []
+#    incidence_mat  = []
+#    R_mat          = []
+#    V_top          = 1 
+#    V_bottom       = 0 
+#    left_mat       = []
+#    right_vec      = []
+#    result         = []
+#    elements       = []
+#    V_vec          = []
+#    I_vec          = []
+#    Lx             = 0
+#    Ly             = 0
+#    Itot           = 0
+#    Rtot           = 0
+#    ktot           = 0
+
+    @classmethod
+    def clear(cls):
+        cls.nboxel         = 0
+        cls.nx, ny         = 0, 0
+        cls.dx, dy, dz     = 0, 0, 0
+        cls.boxels         = []
+        cls.incidence_mat  = []
+        cls.R_mat          = []
+        cls.V_top          = 1 
+        cls.V_bottom       = 0 
+        cls.left_mat       = []
+        cls.right_vec      = []
+        cls.result         = []
+        cls.elements       = []
+        cls.V_vec          = []
+        cls.I_vec          = []
+        cls.Lx             = 0
+        cls.Ly             = 0
+        cls.Itot           = 0
+        cls.Rtot           = 0
+        cls.ktot           = 0
 
 
     def __init__(self, ix, iy):
@@ -119,6 +145,7 @@ class Boxel:
 
     @classmethod
     def set_parameter(cls, nx, ny, dx, dy, dz):
+        cls.clear()
         cls.nx = nx
         cls.ny = ny
         cls.dx = dx 
@@ -235,34 +262,40 @@ class Boxel:
         cls.result = inv(cls.left_mat) @ cls.right_vec
         cls.V_vec  = cls.result[:cls.nboxel-2*cls.nx]
         cls.I_vec  = cls.result[cls.nboxel-2*cls.nx:]
+
+#        temp       = da.from_array(cls.left_mat).rechunk(round(cls.ny/2), round(cls.nx/2))
+#        temp2      = da.linalg.inv(temp).compute()
+#        cls.result = temp2 @ cls.right_vec
+#        cls.V_vec  = cls.result[:cls.nboxel-2*cls.nx]
+#        cls.I_vec  = cls.result[cls.nboxel-2*cls.nx:]
+
 #        print(cls.result)
 #        print(cls.V_vec)
 #        print(cls.I_vec)
 
 
     @classmethod
-    def display_model(cls):
+    def display_model(cls, fig, ax):
         xs = []
         ys = []
         for bx in cls.boxels:
             xs.append(bx.ix)
             ys.append(bx.iy)
             
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.set_aspect("equal")
-        ax1.scatter(xs, ys, color="black", s=3)
+        ax.set_aspect("equal")
+        ax.scatter(xs, ys, color="black", s=3)
 
         for i in range(cls.nx):
-            ax1.plot([i,i], [0,cls.ny-1], color="black")
+            ax.plot([i,i], [0,cls.ny-1], color="black")
 
         for i in range(1,cls.ny-1):
-            ax1.plot([0, cls.nx], [i,i], color="black")
-        plt.show()
+            ax.plot([0, cls.nx], [i,i], color="black")
+
+        ax.set_title("Model")
 
 
     @classmethod
-    def display_k(cls):
+    def display_k(cls, fig, ax):
         xs = []
         ys = []
         ks = []
@@ -270,45 +303,53 @@ class Boxel:
         for bx in cls.boxels:
             ks[bx.iy, bx.ix] = bx.k
 
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.set_aspect("equal")
-        im = ax1.imshow(ks, "jet")
-        ax1.invert_yaxis()
-        fig.colorbar(im, ax=ax1)
-        plt.show()
+        ax.set_aspect("equal")
+        im = ax.imshow(ks, "jet")
+        ax.invert_yaxis()
+        ax.set_title("Conductivity")
+        fig.colorbar(im, ax=ax)
+
+    @classmethod
+    def set_V(cls):
+        cnt = 0
+        for bx in cls.boxels:
+            if bx.iy == 0:
+                bx.V = cls.V_bottom
+            elif bx.iy == cls.ny - 1:
+                bx.V = cls.V_top
+            else:
+                bx.V = cls.V_vec[cnt]
+                cnt += 1
 
 
     @classmethod
-    def display_V(cls):
+    def display_V(cls, fig, ax):
         xs = []
         ys = []
         Vs = np.zeros((cls.ny, cls.nx))
         cnt = 0
         for bx in cls.boxels:
-            if bx.iy == 0:
-                Vs[bx.iy, bx.ix] = cls.V_bottom 
-                bx.V = cls.V_bottom
-            elif bx.iy == cls.ny - 1:
-                Vs[bx.iy, bx.ix] = cls.V_top 
-                bx.V = cls.V_top
-            else:
-                Vs[bx.iy, bx.ix] = cls.V_vec[cnt]
-                bx.V = cls.V_vec[cnt]
-                cnt += 1
+            Vs[bx.iy, bx.ix] = bx.V
+#            if bx.iy == 0:
+#                Vs[bx.iy, bx.ix] = cls.V_bottom 
+#                bx.V = cls.V_bottom
+#            elif bx.iy == cls.ny - 1:
+#                Vs[bx.iy, bx.ix] = cls.V_top 
+#                bx.V = cls.V_top
+#            else:
+#                Vs[bx.iy, bx.ix] = cls.V_vec[cnt]
+#                bx.V = cls.V_vec[cnt]
+#                cnt += 1
 
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.set_aspect("equal")
-        im = ax1.imshow(Vs, "jet")
-        ax1.invert_yaxis()
-        fig.colorbar(im, ax=ax1)
-        plt.show()
+        ax.set_aspect("equal")
+        ax.invert_yaxis()
+        ax.set_title("Voltage")
+        im = ax.imshow(Vs, "jet")
+        fig.colorbar(im, ax=ax)
 
 
     @classmethod
-    def display_I(cls):
-
+    def set_I(cls):
         for e in cls.elements:
             if e.direction == "x":
                 cls.boxels[e.forward].Ix += cls.I_vec[e.idx]/2
@@ -329,7 +370,10 @@ class Boxel:
                 print("e.direction is unknown, exit")
                 exit()
 
-        
+
+    @classmethod
+    def display_I(cls, fig, ax1, ax2, ax3):
+
         xs = []
         ys = []
         Ixs = np.zeros((cls.ny, cls.nx))
@@ -341,12 +385,54 @@ class Boxel:
             Is[bx.iy , bx.ix] = np.sqrt(bx.Ix**2 + bx.Iy**2)
 
 
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
         ax1.set_aspect("equal")
-        im = ax1.imshow(Is, "jet")
+        ax2.set_aspect("equal")
+        ax3.set_aspect("equal")
+        ax1.set_title("I")
+        ax2.set_title("Ix")
+        ax3.set_title("Iy")
+        im1 = ax1.imshow(Is, "jet")
+        im2 = ax2.imshow(Ixs, "jet")
+        im3 = ax3.imshow(Iys, "jet")
         ax1.invert_yaxis()
-        fig.colorbar(im, ax=ax1)
+        ax2.invert_yaxis()
+        ax3.invert_yaxis()
+        fig.colorbar(im1, ax=ax1)
+        fig.colorbar(im2, ax=ax2)
+        fig.colorbar(im3, ax=ax3)
+
+
+    @classmethod
+    def calc_Itot(cls):
+        temp = 0
+        for bx in cls.boxels:
+            if bx.iy == 0:
+                temp += bx.Iy
+
+        cls.Itot = temp
+
+
+    @classmethod
+    def calc_ktot(cls):
+        dV = cls.V_top - cls.V_bottom
+        cls.Rtot = dV/cls.Itot
+        cls.ktot = cls.Ly/(cls.dz*cls.dx*cls.nx)/cls.Rtot
+
+
+    @classmethod
+    def plot_all(cls):
+        fig = plt.figure()
+        ax1 = fig.add_subplot(231)
+        ax2 = fig.add_subplot(232)
+        ax3 = fig.add_subplot(233)
+        ax4 = fig.add_subplot(234)
+        ax5 = fig.add_subplot(235)
+        ax6 = fig.add_subplot(236)
+        cls.display_model(fig, ax1)
+        cls.display_k(fig, ax2)
+        cls.display_V(fig, ax3)
+        cls.display_I(fig, ax4, ax5, ax6)
+        plt.tight_layout()
         plt.show()
 
 
@@ -355,10 +441,10 @@ class Boxel:
         cls.set_incidence_matrix()
         cls.set_eq()
         cls.solve()
-        cls.display_model()
-        cls.display_k()
-        cls.display_V()
-        cls.display_I()
+        cls.set_V()
+        cls.set_I()
+        cls.calc_Itot()
+        cls.calc_ktot()
 
 
 if __name__ == "__main__":
