@@ -31,8 +31,8 @@ class Element:
 class Model:
 
     def __init__(self, N, L):
-        self.N = N 
-        self.L = L
+        self.N = N # number of repeat unit
+        self.L = L # total length [m]
 
         self.npoint   = N + 2 
         self.nelement = 2*N + 1 + 1
@@ -143,8 +143,8 @@ class Model:
 
         self.result_V = self.result[:self.npoint-1]
         self.result_I = self.result[self.npoint-1:]
-        print(self.result_V)
-        print(self.result_I)
+#        print(self.result_V)
+#        print(self.result_I)
 
         for idx in range(self.npoint):
             if idx != self.npoint-1:
