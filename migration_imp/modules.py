@@ -48,6 +48,12 @@ class Model:
         self.result    = None
         self.Ztot      = 0
 
+
+        self.set_points()
+        self.set_elements()
+        self.set_connection_mat()
+
+
     def set_points(self):
         for idx in range(self.npoint):
             self.points.append(Point(idx))
@@ -149,15 +155,19 @@ class Model:
         for idx in range(self.nelement):
             self.elements[idx].I = self.result_I[idx]
 
+    def get_Ztot(self, omega):
+        self.set_Z_mat(omega)
+        self.set_eq()
+        self.solve()
         self.Ztot = -1 * self.points[0].V / self.elements[0].I
-        print(self.Ztot)
+#        print(self.Ztot)
+
+        return self.Ztot
 
 
     def display(self):
         pass
 
-    def run(self):
-        pass
 
 if __name__ == "__main__":
     main()
