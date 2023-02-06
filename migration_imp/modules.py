@@ -1,6 +1,8 @@
 import numpy as np 
 import matplotlib.pyplot as plt
 
+# todo: visualize
+
 
 class Point:
 
@@ -41,13 +43,12 @@ class Model:
 
         self.connection_mat = np.zeros((self.npoint   , self.nelement), dtype=np.complex128)
         self.Z_mat          = np.zeros((self.nelement , self.nelement), dtype=np.complex128)
-        self.zero_mat       = np.zeros((self.npoint-1   , self.npoint-1  ), dtype=np.complex128)
+        self.zero_mat       = np.zeros((self.npoint-1 , self.npoint-1), dtype=np.complex128)
 
         self.left_mat  = None
         self.right_vec = None
         self.result    = None
         self.Ztot      = 0
-
 
         self.set_points()
         self.set_elements()
@@ -91,7 +92,7 @@ class Model:
             exit()
 
         if len(ZBs) != self.N+1:
-            print("len(ZAs) must be {}".format(self.N+1))
+            print("len(ZBs) must be {}".format(self.N+1))
             exit()
 
         for idx in range(self.nelement):
@@ -99,12 +100,10 @@ class Model:
                 self.elements[idx].set_Z(lambda omega: 0)
 
             elif self.elements[idx].name == "ZA":
-#                self.elements[idx].set_Z(lambda omega: 1)
                 self.elements[idx].set_Z(ZAs[cnt_ZA])
                 cnt_ZA += 1 
 
             elif self.elements[idx].name == "ZB":
-#                self.elements[idx].set_Z(lambda omega: 1)
                 self.elements[idx].set_Z(ZBs[cnt_ZB])
                 cnt_ZB += 1 
 
